@@ -1,5 +1,6 @@
 package com.will.bluetoothprinterdemo.ui;
 
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
@@ -37,7 +38,7 @@ public class PrinterSettingActivity extends BasePrintActivity implements View.On
 
     final static int TASK_TYPE_CONNECT = 1;
     final static int TASK_TYPE_PRINT = 2;
-
+    @SuppressLint("JavascriptInterface")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -123,8 +124,10 @@ public class PrinterSettingActivity extends BasePrintActivity implements View.On
     public void onConnected(BluetoothSocket socket, int taskType) {
         switch (taskType){
             case TASK_TYPE_PRINT:
+                Intent intent=getIntent();
+                String content=intent.getStringExtra("content");
                 Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.test_image);
-                PrintUtil.printTest(socket, bitmap);
+                PrintUtil.printTest(socket, bitmap,content);
                 break;
         }
     }

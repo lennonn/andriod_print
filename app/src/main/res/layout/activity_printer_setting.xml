@@ -18,7 +18,7 @@
         android:id="@+id/lv_paired_devices"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_weight="0.16"
         android:background="@color/colorWhite"
         android:choiceMode="singleChoice"
         android:divider="@android:drawable/divider_horizontal_bright" />

@@ -4,12 +4,15 @@ import android.bluetooth.BluetoothSocket;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.os.Bundle;
 
 import com.github.promeg.pinyinhelper.Pinyin;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * 蓝牙打印工具类
@@ -49,9 +52,11 @@ public class PrintUtil {
      * @throws IOException
      */
     public void initPrinter() throws IOException {
-        mWriter.write(0x1B);
-        mWriter.write(0x40);
-        mWriter.flush();
+        int com[] ={0x1B,0x40};
+        sendDataToPrinter(com);
+        //mWriter.write(0x1B);
+       // mWriter.write(0x40);
+       // mWriter.flush();
     }
 
     /**
@@ -62,9 +67,21 @@ public class PrintUtil {
      */
     public void printLine(int lineNum) throws IOException {
         for (int i = 0; i < lineNum; i++) {
-            mWriter.write("\n");
+            mWriter.write(0x0A);
         }
         mWriter.flush();
+    }
+
+    /**
+     * 打印回车
+     *
+     * @return length 打印并回车
+     * @throws IOException
+     */
+    public void printEnter() throws IOException {
+        sendDataToPrinter(new int[]{0x0D});
+       // mWriter.write(0x0D);
+       // mWriter.flush();
     }
 
     /**
@@ -76,6 +93,21 @@ public class PrintUtil {
         printLine(1);
     }
 
+    public void sendDataToPrinter(int[] com) throws IOException{
+        for(int i=0;i<com.length;i++){
+            mWriter.write(com[i]);
+        }
+        mWriter.flush();
+    }
+    public void printLineSpace()throws IOException{
+        int com[] ={0x1B,0x31,10};
+        sendDataToPrinter(com);
+    }
+
+    public void printAndGoPaper()throws IOException{
+        int com[] ={0x1B,0x64,0x2};
+        sendDataToPrinter(com);
+    }
     /**
      * 打印空白(一个Tab的位置，约4个汉字)
      *
@@ -99,8 +131,7 @@ public class PrintUtil {
         byte[] bs = new byte[4];
         bs[0] = 0x1B;
         bs[1] = 0x24;
-        bs[2] = (byte) (offset % 256);
-        bs[3] = (byte) (offset / 256);
+        bs[2] = 32;
         return bs;
     }
 
@@ -115,9 +146,9 @@ public class PrintUtil {
         for (int i = 0; i < str.length(); i++) {
             c = str.charAt(i);
             if (Pinyin.isChinese(c)) {
-                pixLength += 24;
+                pixLength += 32;
             } else {
-                pixLength += 12;
+                pixLength += 32;
             }
         }
         return pixLength;
@@ -171,9 +202,9 @@ public class PrintUtil {
         System.arraycopy(tmp, 0, byteBuffer, iNum, tmp.length);
         iNum += tmp.length;
 
-        tmp = setLocation(getOffset(content));
-        System.arraycopy(tmp, 0, byteBuffer, iNum, tmp.length);
-        iNum += tmp.length;
+        //tmp = setLocation(getOffset(content));
+       // System.arraycopy(tmp, 0, byteBuffer, iNum, tmp.length);
+        //iNum += tmp.length;
 
         tmp = getGbk(content);
         System.arraycopy(tmp, 0, byteBuffer, iNum, tmp.length);
@@ -216,8 +247,9 @@ public class PrintUtil {
         print(byteBuffer);
     }
 
+
     public void printDashLine() throws IOException {
-        printText("--------------------------------");
+        printText("---------------------------");
     }
 
     public void printBitmap(Bitmap bmp) throws IOException {
@@ -322,58 +354,46 @@ public class PrintUtil {
         return targetBmp;
     }
 
-    public static void printTest(BluetoothSocket bluetoothSocket, Bitmap bitmap) {
+    public static void printTest(BluetoothSocket bluetoothSocket, Bitmap bitmap,String content) {
 
         try {
             PrintUtil pUtil = new PrintUtil(bluetoothSocket.getOutputStream(), "GBK");
-            // 店铺名 居中 放大
-            pUtil.printAlignment(1);
-            pUtil.printLargeText("解忧杂货店");
-            pUtil.printLine();
-            pUtil.printAlignment(0);
-            pUtil.printLine();
 
-            pUtil.printTwoColumn("时间:", "2017-05-09 15:50:41");
-            pUtil.printLine();
 
-            pUtil.printTwoColumn("订单号:", System.currentTimeMillis() + "");
+            if(content.startsWith("\"")&&content
+                    .endsWith("\"")){
+                content =content.substring(1,content.length()-1);
+            }
+            String[] cons = new String[6];
+            cons[0]="车牌号:苏A12871";
+            cons[1]="产品:聚乙烯7042";
+            cons[2]="装车吨数:33";
+            cons[3]="装车位置:11门,第(2)仓库位";
+            cons[4]="车牌号:苏A12871";
+            cons[5]="产品批次:20170518000";
+            for(int i=0;i<cons.length;i++){
+                String[] tent=cons[i].split(":");
+                pUtil.printLineSpace();
+                pUtil.printLine();
+                pUtil.printTwoColumn(tent[0]+":", tent[1]);
+                pUtil.printLineSpace();
+                pUtil.printLine();
+            }
             pUtil.printLine();
+            pUtil.printDashLine();
+            pUtil.printLine(1);
+            Date date = new Date();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
-            pUtil.printTwoColumn("付款人:", "VitaminChen");
-            pUtil.printLine();
+            sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+            pUtil.printTwoColumn("打印时间:", sdf.format(new Date()));
+            pUtil.printLine(1);
 
             // 分隔线
             pUtil.printDashLine();
-            pUtil.printLine();
+            pUtil.printLine(2);
+            pUtil.printAndGoPaper();
 
-            //打印商品列表
-            pUtil.printText("商品");
-            pUtil.printTabSpace(2);
-            pUtil.printText("数量");
-            pUtil.printTabSpace(1);
-            pUtil.printText("    单价");
-            pUtil.printLine();
-
-            pUtil.printThreeColumn("iphone6", "1", "4999.00");
-            pUtil.printThreeColumn("测试一个超长名字的产品看看打印出来会怎么样哈哈哈哈哈哈", "1", "4999.00");
-
-            pUtil.printDashLine();
-            pUtil.printLine();
-
-            pUtil.printTwoColumn("订单金额:", "9998.00");
-            pUtil.printLine();
-
-            pUtil.printTwoColumn("实收金额:", "10000.00");
-            pUtil.printLine();
-
-            pUtil.printTwoColumn("找零:", "2.00");
-            pUtil.printLine();
-
-            pUtil.printDashLine();
-
-            pUtil.printBitmap(bitmap);
-
-            pUtil.printLine(4);
 
         } catch (IOException e) {
 
