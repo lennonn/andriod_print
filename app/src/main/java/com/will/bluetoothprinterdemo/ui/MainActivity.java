@@ -25,6 +25,7 @@ import android.widget.Toast;
 
 import com.will.bluetoothprinterdemo.R;
 import com.will.bluetoothprinterdemo.utils.BluetoothUtil;
+import com.will.bluetoothprinterdemo.utils.ConnectBlue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -164,9 +165,9 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "js返回的结果为=" + value);
                 //Toast.makeText(MainActivity.this,"js返回的结果为=" + value,Toast.LENGTH_LONG).show();
                 List<BluetoothDevice> printerDevices = getPairedDevices();
-
-                 AsyncTask mConnectTask =new ConnectBluetoothTask(2).execute(printerDevices.get(0));
-
+                BluetoothSocket socket=  BluetoothUtil.connectDevice(printerDevices.get(0));
+                PrinterSettingActivity psa = new PrinterSettingActivity();
+                psa.onConnected(socket,2);
                 Intent intent = new Intent();
                 intent.setClass(MainActivity.this, PrinterSettingActivity.class);
 
@@ -180,46 +181,5 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
-    class ConnectBluetoothTask extends AsyncTask<BluetoothDevice, Integer, BluetoothSocket> {
-
-        int mTaskType;
-
-        public ConnectBluetoothTask(int taskType) {
-            this.mTaskType = taskType;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            showProgressDialog("请稍候...");
-            super.onPreExecute();
-        }
-
-        @Override
-        protected BluetoothSocket doInBackground(BluetoothDevice... params) {
-            if(mSocket != null){
-                try {
-                    mSocket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            mSocket = BluetoothUtil.connectDevice(params[0]);;
-            onConnected(mSocket, mTaskType);
-            return mSocket;
-        }
-
-        @Override
-        protected void onPostExecute(BluetoothSocket socket) {
-            mProgressDialog.dismiss();
-            if (socket == null || !socket.isConnected()) {
-               // toast("连接打印机失败");
-            } else {
-              //  toast("成功！");
-            }
-
-            super.onPostExecute(socket);
-        }
-    }
 
 }

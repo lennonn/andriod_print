@@ -13,7 +13,6 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
-import com.will.bluetoothprinterdemo.ui.BasePrintActivity;
 
 import java.io.IOException;
 
@@ -25,7 +24,7 @@ public abstract class BasePrint extends AppCompatActivity {
 
     String tag = getClass().getSimpleName();
     private BluetoothSocket mSocket;
-    private BasePrintActivity.BluetoothStateReceiver mBluetoothStateReceiver;
+    private BluetoothStateReceiver mBluetoothStateReceiver;
     private AsyncTask mConnectTask;
     private ProgressDialog mProgressDialog;
 
@@ -80,7 +79,7 @@ public abstract class BasePrint extends AppCompatActivity {
     }
 
     private void initReceiver() {
-        mBluetoothStateReceiver = new BasePrintActivity.BluetoothStateReceiver();
+        mBluetoothStateReceiver = new BluetoothStateReceiver();
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         registerReceiver(mBluetoothStateReceiver, filter);
@@ -102,7 +101,7 @@ public abstract class BasePrint extends AppCompatActivity {
 
     public void connectDevice(BluetoothDevice device, int taskType) {
         if (checkBluetoothState() && device != null) {
-            mConnectTask = new BasePrintActivity.ConnectBluetoothTask(taskType).execute(device);
+            mConnectTask = new ConnectBluetoothTask(taskType).execute(device);
         }
     }
 
@@ -185,5 +184,4 @@ public abstract class BasePrint extends AppCompatActivity {
             onBluetoothStateChanged(intent);
         }
     }
-
 }
