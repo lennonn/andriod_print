@@ -360,23 +360,17 @@ public class PrintUtil {
             PrintUtil pUtil = new PrintUtil(bluetoothSocket.getOutputStream(), "GBK");
 
 
-            if(content.startsWith("\"")&&content
-                    .endsWith("\"")){
-                content =content.substring(1,content.length()-1);
+            if(content.startsWith("[")&&content.endsWith("]")){
+                content=content.substring(1,content.length()-1);
             }
-            String[] cons = new String[6];
-            cons[0]="车牌号:苏A12871";
-            cons[1]="产品:聚乙烯7042";
-            cons[2]="装车吨数:33";
-            cons[3]="装车位置:11门,第(2)仓库位";
-            cons[4]="车牌号:苏A12871";
-            cons[5]="产品批次:20170518000";
+            String[] cons = content.split(",");
+
             for(int i=0;i<cons.length;i++){
                 String[] tent=cons[i].split(":");
-                pUtil.printLineSpace();
+                //pUtil.printLineSpace();
                 pUtil.printLine();
-                pUtil.printTwoColumn(tent[0]+":", tent[1]);
-                pUtil.printLineSpace();
+                pUtil.printTwoColumn(tent[0].substring(1)+":", tent[1].substring(0,tent[1].length()-1));
+               // pUtil.printLineSpace();
                 pUtil.printLine();
             }
             pUtil.printLine();
