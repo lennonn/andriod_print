@@ -26,6 +26,7 @@ import android.widget.Toast;
 import com.will.bluetoothprinterdemo.R;
 import com.will.bluetoothprinterdemo.utils.BluetoothUtil;
 import com.will.bluetoothprinterdemo.utils.ConnectBlue;
+import com.will.bluetoothprinterdemo.utils.PrintUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -166,8 +167,9 @@ public class MainActivity extends AppCompatActivity {
                 //Toast.makeText(MainActivity.this,"js返回的结果为=" + value,Toast.LENGTH_LONG).show();
                 List<BluetoothDevice> printerDevices = getPairedDevices();
                 BluetoothSocket socket=  BluetoothUtil.connectDevice(printerDevices.get(0));
-                PrinterSettingActivity psa = new PrinterSettingActivity();
-                psa.onConnected(socket,2);
+
+                PrintUtil.printTest(socket, null,value);
+                //psa.onConnected(socket,2);
                 Intent intent = new Intent();
                 intent.setClass(MainActivity.this, PrinterSettingActivity.class);
 

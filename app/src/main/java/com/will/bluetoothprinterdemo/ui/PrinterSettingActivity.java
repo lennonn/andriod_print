@@ -121,11 +121,11 @@ public class PrinterSettingActivity extends BasePrintActivity implements View.On
     }
 
     @Override
-    public void onConnected(BluetoothSocket socket, int taskType) {
+    public void onConnected(BluetoothSocket socket, int taskType,String content) {
         switch (taskType){
             case TASK_TYPE_PRINT:
                 Intent intent=getIntent();
-                String content=intent.getStringExtra("content");
+                //String content=intent.getStringExtra("content");
                 Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.test_image);
                 PrintUtil.printTest(socket, bitmap,content);
                 break;
