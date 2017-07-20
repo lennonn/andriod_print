@@ -2,9 +2,14 @@ package com.will.bluetoothprinterdemo.ui;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.ProgressDialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothClass;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -19,12 +24,21 @@ import android.webkit.WebViewClient;
 import android.widget.Toast;
 
 import com.will.bluetoothprinterdemo.R;
+import com.will.bluetoothprinterdemo.utils.BluetoothUtil;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private WebView mWebView;
-
+    private BluetoothSocket mSocket;
+    private BasePrintActivity.BluetoothStateReceiver mBluetoothStateReceiver;
+    private AsyncTask mConnectTask;
+    private ProgressDialog mProgressDialog;
     @SuppressLint("JavascriptInterface")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,9 +47,8 @@ public class MainActivity extends AppCompatActivity {
 
         mWebView = (WebView) findViewById(R.id.webview);
         //mWebView.loadUrl("file:///android_asset/js_java_interaction.html");//加载本地asset下面的js_java_interaction.html文件
-       // mWebView.loadUrl("http://1u52s05192.51mypc.cn:9081/yulinchemical/jsp/android/login.jsp");//加载本地assets下面的js_java_interaction.html文件
-        http://192.168.1.16:8080/yulinchemical/
-        mWebView.loadUrl("http://192.168.1.22:8080/yulinchemical/jsp/android/login.jsp");//加载本地assets下面的js_java_interaction.html文件
+        mWebView.loadUrl("http://1u52s05192.51mypc.cn:9081/yulinchemical/jsp/android/login.jsp");//加载本地assets下面的js_java_interaction.html文件
+        //mWebView.loadUrl("http://192.168.1.19:8080/yulinchemical/jsp/android/login.jsp");//加载本地assets下面的js_java_interaction.html文件
 
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);//打开js支持
@@ -88,6 +101,46 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 获取所有已配对的打印类设备
+     */
+    public static List<BluetoothDevice> getPairedPrinterDevices() {
+        return getSpecificDevice(BluetoothClass.Device.Major.IMAGING);
+    }
+
+    /**
+     * 从已配对设配中，删选出某一特定类型的设备展示
+     * @param deviceClass
+     * @return
+     */
+    public static List<BluetoothDevice> getSpecificDevice(int deviceClass){
+        List<BluetoothDevice> devices = BluetoothUtil.getPairedDevices();
+        List<BluetoothDevice> printerDevices = new ArrayList<>();
+
+        for (BluetoothDevice device : devices) {
+            BluetoothClass klass = device.getBluetoothClass();
+            // 关于蓝牙设备分类参考 http://stackoverflow.com/q/23273355/4242112
+            if (klass.getMajorDeviceClass() == deviceClass)
+                printerDevices.add(device);
+        }
+
+        return printerDevices;
+    }
+
+
+    /**
+     * 获取所有已配对的设备
+     */
+    public static List<BluetoothDevice> getPairedDevices() {
+        List deviceList = new ArrayList<>();
+        Set<BluetoothDevice> pairedDevices = BluetoothAdapter.getDefaultAdapter().getBondedDevices();
+        if (pairedDevices.size() > 0) {
+            for (BluetoothDevice device : pairedDevices) {
+                deviceList.add(device);
+            }
+        }
+        return deviceList;
+    }
     //点击按钮，访问H5里带返回值的方法
     @TargetApi(Build.VERSION_CODES.KITKAT)
     public void onClick(View v) {
@@ -110,6 +163,10 @@ public class MainActivity extends AppCompatActivity {
             public void onReceiveValue(String value) {
                 Log.d(TAG, "js返回的结果为=" + value);
                 //Toast.makeText(MainActivity.this,"js返回的结果为=" + value,Toast.LENGTH_LONG).show();
+                List<BluetoothDevice> printerDevices = getPairedDevices();
+
+                 AsyncTask mConnectTask =new ConnectBluetoothTask(2).execute(printerDevices.get(0));
+
                 Intent intent = new Intent();
                 intent.setClass(MainActivity.this, PrinterSettingActivity.class);
 
@@ -122,4 +179,47 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
+
+    class ConnectBluetoothTask extends AsyncTask<BluetoothDevice, Integer, BluetoothSocket> {
+
+        int mTaskType;
+
+        public ConnectBluetoothTask(int taskType) {
+            this.mTaskType = taskType;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            showProgressDialog("请稍候...");
+            super.onPreExecute();
+        }
+
+        @Override
+        protected BluetoothSocket doInBackground(BluetoothDevice... params) {
+            if(mSocket != null){
+                try {
+                    mSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            mSocket = BluetoothUtil.connectDevice(params[0]);;
+            onConnected(mSocket, mTaskType);
+            return mSocket;
+        }
+
+        @Override
+        protected void onPostExecute(BluetoothSocket socket) {
+            mProgressDialog.dismiss();
+            if (socket == null || !socket.isConnected()) {
+               // toast("连接打印机失败");
+            } else {
+              //  toast("成功！");
+            }
+
+            super.onPostExecute(socket);
+        }
+    }
+
 }
