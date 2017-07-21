@@ -183,12 +183,12 @@ public class PrintUtil {
         mWriter.write(0x1b);
         mWriter.write(0x21);
         mWriter.write(48);
-
+        mWriter.write(1);
         mWriter.write(text);
 
         mWriter.write(0x1b);
         mWriter.write(0x21);
-        mWriter.write(0);
+        mWriter.write(1);
 
         mWriter.flush();
     }
@@ -251,7 +251,12 @@ public class PrintUtil {
     public void printDashLine() throws IOException {
         printText("---------------------------");
     }
-
+    public void printBox() throws  IOException{
+        printText("---------------------------");
+        printText("|                          |");
+        printText("|                          |");
+        printText("---------------------------");
+    }
     public void printBitmap(Bitmap bmp) throws IOException {
         bmp = compressPic(bmp);
         byte[] bmpByteArray = draw2PxPoint(bmp);
@@ -364,14 +369,18 @@ public class PrintUtil {
                 content=content.substring(1,content.length()-1);
             }
             String[] cons = content.split(",");
-
+            //pUtil.printAlignment(1);
+            pUtil.printLargeText("装车单信息");
+            pUtil.printLine();
             for(int i=0;i<cons.length;i++){
                 String[] tent=cons[i].split(":");
                 //pUtil.printLineSpace();
-                pUtil.printLine();
-                pUtil.printTwoColumn(tent[0].substring(1)+":", tent[1].substring(0,tent[1].length()-1));
-               // pUtil.printLineSpace();
-                pUtil.printLine();
+                if(tent.length==2){
+                    pUtil.printLine();
+                    pUtil.printTwoColumn(tent[0]+":", tent[1]);
+                    // pUtil.printLineSpace();
+                    pUtil.printLine();
+                }
             }
             pUtil.printLine();
             pUtil.printDashLine();
@@ -382,7 +391,7 @@ public class PrintUtil {
             sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
             pUtil.printTwoColumn("打印时间:", sdf.format(new Date()));
             pUtil.printLine(1);
-
+           // pUtil.printBox();
             // 分隔线
             pUtil.printDashLine();
             pUtil.printLine(2);

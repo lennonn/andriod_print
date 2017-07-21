@@ -165,18 +165,26 @@ public class MainActivity extends AppCompatActivity {
             public void onReceiveValue(String value) {
                 Log.d(TAG, "js返回的结果为=" + value);
                 //Toast.makeText(MainActivity.this,"js返回的结果为=" + value,Toast.LENGTH_LONG).show();
+
                 List<BluetoothDevice> printerDevices = getPairedDevices();
-                BluetoothSocket socket=  BluetoothUtil.connectDevice(printerDevices.get(0));
+                value = value.substring(1,value.length()-1);
+                String[] printContent=value.split(";");
+                if(!BluetoothUtil.isBluetoothOn()){
+                    mWebView.loadUrl("javascript:devicesConnectInfo('蓝牙未打开，请打开蓝牙','" + printContent[1] + "')");
+                }else {
+                    BluetoothSocket socket = null;
+                    for (BluetoothDevice bd : printerDevices) {
+                        socket = BluetoothUtil.connectDevice(bd);
+                        if (socket != null) break;
+                    }
+                    if (socket == null) {
+                        mWebView.loadUrl("javascript:devicesConnectInfo('没有可用的蓝牙设备','" + printContent[1] + "')");
 
-                PrintUtil.printTest(socket, null,value);
-                //psa.onConnected(socket,2);
-                Intent intent = new Intent();
-                intent.setClass(MainActivity.this, PrinterSettingActivity.class);
-
-                Bundle bundle=new Bundle();
-                bundle.putString("content",value);
-                intent.putExtras(bundle);
-                startActivity(intent);
+                    } else {
+                        PrintUtil.printTest(socket, null, printContent[0]);
+                        mWebView.loadUrl("javascript:printFinishCall('" + printContent[1] + "')");
+                    }
+                }
             }
         });
 
